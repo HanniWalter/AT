@@ -7,6 +7,18 @@ class Node:
         self.inT = []
         self.outT = []
 
+    def addInT(self,a, q):
+        self.inT.append((a,q))
+
+    def removeInT(self,a, q):
+        self.inT.remove((a,q))
+
+    def addOutT(self,a, r):
+        self.OutT.append((a,r))
+
+    def removeOutT(self,a, q):
+        self.Out.remove((a,q))
+
 class Automata:
     def __init__(self,alphabet) -> None:
         self.Q = []
@@ -25,7 +37,6 @@ class Automata:
             new.addQ(f)
         for t in A.T:
             new.addQ(t)
-
         return new
 
     def combine(A,B):
@@ -70,13 +81,18 @@ class Automata:
         assert len(t) == 3 
         self.addT(t[0],t[1],t[2])
 
+    def removeT(self,q,a,r):
+        q.removeOutT(a,r)
+        r.removeInT(a,q)
+        self.T.remove((q,a,r))
 
     def addT(self,q,a,r):
         assert q in self.Q   
         assert r in self.Q  
         assert a != "" 
         self.T.append((q,a,r))
-        q.outT.append((a,r))
+        q.addOut
+        .append((a,r))
         r.inT.append((a,q))
 
     def addI(self,node):
@@ -122,9 +138,7 @@ class Automata:
 
     def powerset_construction(self):
         B = Automata(self.alphabet)
-
-        for i, combi in enumerate(more_itertools.powerset(self.Q)):
-            
+        for i, combi in enumerate(more_itertools.powerset(self.Q)):    
             B.addQ("q"+i)
             assert False, "ToDO"
 
@@ -144,14 +158,56 @@ class Automata:
         return True 
     
     def makeComplete(self):
-        B = Automata(self.alphabet,self.Q,self.T,self.I,self.F)
+        B = self.copy()
         qdead = Node(self.find_free_state("dead"))
-        B.addQ(B)
+        B.addQ(qdead)
+        for q in B.Q:
+            for a in B.alphabet:
+                if not a in [x[0] for x in q.outT]:
+                    B.addT((q,a,qdead))
+        return B
 
+    def complement(self):
+        if self.isComplete():
+            B = Automata.copy(self)
+        else:
+            B = self.makeComplete()
+        new_F = []
+        for q in self.Q:
+            if q not in self.F:
+                new_F.append(q)
+        B.F = []
+        for f in new_F:
+            B.addF(f)
+        return B
 
+    def inital_normalized(self):
+        B = Automata.copy(self)
+        qinitial = Node(B.find_free_state("initial"))
+        B.addQ(qinitial)
+        for i in self.I:
+            for t in i.outT:
+                B.addT((qinitial,t[0],t[0]))
+        B.I = []
+        B.addI(qinitial)
+
+        if set(self.I)
+
+        return B
         
+    def final_normalized(self):
+        B = Automata.copy(self)
+        qinitial = Node(B.find_free_state("initial"))
+        B.addQ(qinitial)
+        for i in self.I:
+            for t in i.outT:
+                B.addT((qinitial,t[0],t[0]))
+        B.I = []
+        B.addI(qinitial)
+        return B
 
-             
+    def normalized(self):
+        B = Automata.copy(self)           
 
 def main():
     A = Automata(["a","b","c"])
