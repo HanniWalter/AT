@@ -1,5 +1,5 @@
 import more_itertools
-
+import itertools
 
 class Node:
     def __init__(self, description):
@@ -211,6 +211,45 @@ class Automata:
     def normalized(self):
         pass # todo
 
+    def Kleene(self):
+        print("Kleene")
+        maxk = len(self.Q)-1
+        sets =  []
+        for i,f in itertools.product(self.I,self.F):
+            indi = self.Q.index(i)
+            indf = self.Q.index(f)
+            x = self.X(maxk,indi,indf)
+            sets.append(x)
+
+        term = " VER ".join(sets)
+        print(term)
+
+    def X(self,k,m,l):
+        if k == -1:
+            t= [x[0] for x in self.Q[m].outT if x[1] == self.Q[l]]
+            return toTerm(t)
+        else:
+            term1 = self.X(k-1,m,l)
+            term2 = self.X(k-1,m,k)
+            term3 = self.X(k-1,k,k)
+            term4 = self.X(k-1,k,l)
+
+            return term1 + " VER (" + term2 +" MAL " +"("+ term3 +")*" +" MAL " + term4+ ")"
+
+def toTerm(a):
+    if type(a) == list:
+        if a == []:
+            return "EMPTY"
+        return "{"+",".join([toTerm(x)for x in a])+"}"
+    return a
+
+class REGEX():
+    def __init__(self,a):
+        if a is "":
+            typ = "EMPTY"
+
+
+
 def main():
     A = Automata(["a","b","c"])
     q1 = Node("q1")
@@ -231,6 +270,22 @@ def main():
     A.addT(q1,"b",q2)
     A.addT(q2,"b",q2)
     A.addT(q2,"c",q3)
+
+
+    B = Automata(["a","b"])
+    q1 = Node("q1")
+    q2 = Node("q2")
+
+    B.addQ(q1)
+    B.addQ(q2)
+    B.addI(q1)
+    B.addF(q2)
+    B.addT(q1,"a",q2)
+    B.addT(q2,"a",q1)
+    B.addT(q2,"b",q2)
+
+    B.Kleene()
+
 
 
 if __name__ == '__main__':
