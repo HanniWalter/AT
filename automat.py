@@ -14,10 +14,10 @@ class Node:
         self.inT.remove((a,q))
 
     def addOutT(self,a, r):
-        self.OutT.append((a,r))
+        self.outT.append((a,r))
 
     def removeOutT(self,a, q):
-        self.Out.remove((a,q))
+        self.outT.remove((a,q))
 
 class Automata:
     def __init__(self,alphabet) -> None:
@@ -32,7 +32,7 @@ class Automata:
         for q in A.Q:
             new.addQ(q)
         for i in A.I:
-            new.addQ(I)
+            new.addQ(i)
         for f in A.F:
             new.addQ(f)
         for t in A.T:
@@ -91,9 +91,8 @@ class Automata:
         assert r in self.Q  
         assert a != "" 
         self.T.append((q,a,r))
-        q.addOut
-        .append((a,r))
-        r.inT.append((a,q))
+        q.addOutT(a,r)
+        r.addInT(a,q)
 
     def addI(self,node):
         assert node in self.Q
@@ -187,27 +186,30 @@ class Automata:
         B.addQ(qinitial)
         for i in self.I:
             for t in i.outT:
-                B.addT((qinitial,t[0],t[0]))
+                B.addT((qinitial,t[0],t[1]))
         B.I = []
         B.addI(qinitial)
 
-        if set(self.I)
-
+        if set(self.I) & set(self.F):
+            B.addF(qinitial)
         return B
         
     def final_normalized(self):
         B = Automata.copy(self)
-        qinitial = Node(B.find_free_state("initial"))
-        B.addQ(qinitial)
-        for i in self.I:
-            for t in i.outT:
-                B.addT((qinitial,t[0],t[0]))
-        B.I = []
-        B.addI(qinitial)
+        qfinal = Node(B.find_free_state("initial"))
+        B.addQ(qfinal)
+        for f in self.F:
+            for t in f.inT:
+                B.addT((t[1],t[0],qfinal))
+        B.F = []
+        B.addF(qfinal)
+
+        if set(self.I) & set(self.F):
+            B.addI(qfinal)
         return B
 
     def normalized(self):
-        B = Automata.copy(self)           
+        pass # todo
 
 def main():
     A = Automata(["a","b","c"])
