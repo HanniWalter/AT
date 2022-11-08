@@ -220,35 +220,84 @@ class Automata:
             indf = self.Q.index(f)
             x = self.X(maxk,indi,indf)
             sets.append(x)
-
-        term = " VER ".join(sets)
-        print(term)
+        
+        old = REGEX("MULTIUNION", sets)
+        #pretty = old.getSmart()
+        return old
 
     def X(self,k,m,l):
         if k == -1:
             t= [x[0] for x in self.Q[m].outT if x[1] == self.Q[l]]
-            return toTerm(t)
+            if len(t) == 0:
+                return REGEX("EMPTY")
+            if len(t) == 1:
+                return REGEX("LITERAL",t[0])
+            return REGEX("SET",[REGEX("Literal",x) for x in t])
         else:
             term1 = self.X(k-1,m,l)
             term2 = self.X(k-1,m,k)
             term3 = self.X(k-1,k,k)
             term4 = self.X(k-1,k,l)
 
-            return term1 + " VER (" + term2 +" MAL " +"("+ term3 +")*" +" MAL " + term4+ ")"
-
-def toTerm(a):
-    if type(a) == list:
-        if a == []:
-            return "EMPTY"
-        return "{"+",".join([toTerm(x)for x in a])+"}"
-    return a
+            return REGEX("UNION",term1,REGEX("CONCAT",term2,REGEX("CONCAT",REGEX("STAR",term3),term4)))
 
 class REGEX():
-    def __init__(self,a):
-        if a is "":
-            typ = "EMPTY"
+    def __init__(self,type,a = None,b = None):
+        self.type = type
+        self.a = a
+        self.b = b
+
+    def getSmart(self):
+        if self.type == "STAR":
+            if self.a.getSmart().type == "EMPTY":
+               return REGEX("EPSILON")
+            return REGEX("STAR",self.a.getSmart())
+        if self.type == "CONCAT":
+            if self.a.getSmart().type == "EMPTY":
+                return REGEX("EMPTY")
+            if self.b.getSmart().type == "EMPTY":
+                return REGEX("EMPTY")
+            if self.a.getSmart().type == "EPSILON":
+                return self.b.getSmart()
+            if self.b.getSmart().type == "EPSILON":
+                return self.a.getSmart()
+            return REGEX("CONCAT",self.a.getSmart(),self.b.getSmart())
+        if self.type == "UNION":
+            if self.a.getSmart().type == "EMPTY":
+                return self.b.getSmart()
+            if self.b.getSmart().type == "EMPTY":
+                return self.a.getSmart()
+            return REGEX("CONCAT",self.a.getSmart(),self.b.getSmart())
+        if self.type == "MULTIUNION":
+            if self.a == []:
+                return REGEX("EMPTY")
+            if len(self.a) == 1:
+                return self.a[0].getSmart()
+            self.a = [x.getSmart() for x in self.a]
+            return self
+        if self.type == "LITERAL":
+            return self
+        if self.type == "EMPTY":
+            return self
+        print("here not supoortet",self.type)
 
 
+    def toString(self):
+        smartself = self.getSmart()
+        if smartself.type == "LITERAL":
+            return smartself.a
+        if smartself.type == "UNION":
+            return "{ " + smartself.a.toString() +" UNION "+ smartself.toString() + " }"
+        if smartself.type == "MULTIUNION":
+            return "MULTIUNION{ " +" , ".join([x.toString() for x in smartself.a]) +"}"
+        if smartself.type == "CONCAT":
+            return smartself.a.toString() + " POINT " +smartself.b.toString() 
+        if smartself.type == "STAR":
+            return "("+ smartself.a.toString()+")*"
+        
+        print("not supported",smartself.type)
+
+        pass
 
 def main():
     A = Automata(["a","b","c"])
@@ -281,10 +330,11 @@ def main():
     B.addI(q1)
     B.addF(q2)
     B.addT(q1,"a",q2)
-    B.addT(q2,"a",q1)
+    #B.addT(q2,"a",q1)
     B.addT(q2,"b",q2)
 
-    B.Kleene()
+    print(B.Kleene().toString())
+
 
 
 
