@@ -228,8 +228,10 @@ class Automata:
     def X(self,k,m,l):
         if k == -1:
             t= [x[0] for x in self.Q[m].outT if x[1] == self.Q[l]]
-            if len(t) == 0:
+            if len(t) == 0 and m!= l:
                 return REGEX("EMPTY")
+            if len(t) == 0 and m==l:
+                return REGEX("EPSILON")
             if len(t) == 1:
                 return REGEX("LITERAL",t[0])
             return REGEX("SET",[REGEX("Literal",x) for x in t])
@@ -279,64 +281,82 @@ class REGEX():
             return self
         if self.type == "EMPTY":
             return self
+        if self.type == "EPSILON":
+            return self
         print("here not supoortet",self.type)
 
 
-    def toString(self):
+    def toString(self, point = False):
         smartself = self.getSmart()
         if smartself.type == "LITERAL":
             return smartself.a
         if smartself.type == "UNION":
-            return "{ " + smartself.a.toString() +" UNION "+ smartself.toString() + " }"
+            return "{ " + smartself.a.toString(point) +" UNION "+ smartself.toString(point) + " }"
         if smartself.type == "MULTIUNION":
-            return "MULTIUNION{ " +" , ".join([x.toString() for x in smartself.a]) +"}"
+            return "MULTIUNION{ " +" , ".join([x.toString(point) for x in smartself.a]) +"}"
         if smartself.type == "CONCAT":
-            return smartself.a.toString() + " POINT " +smartself.b.toString() 
+            return smartself.a.toString(point) + " POINT "*point +smartself.b.toString(point) 
         if smartself.type == "STAR":
-            return "("+ smartself.a.toString()+")*"
+            return "("+ smartself.a.toString(point)+")*"
+        if smartself.type == "EPSILON":
+            return("E")
         
         print("not supported",smartself.type)
 
         pass
 
+    def print(self):
+        smartself = self.getSmart()
+        if smartself.type == "MULTIUNION":
+            print("MULTIUNION:{")
+            for x in smartself.a:
+                print(x.toString(),",")
+            print("}")
+        else:
+            print(smartself.toString())
+
+
+
+
 def main():
-    A = Automata(["a","b","c"])
-    q1 = Node("q1")
-    q2 = Node("q2")
-    q3 = Node("q3")
-    q4 = Node("q4")
-    A.addQ(q1)
-    A.addQ(q2)
-    A.addQ(q3)
-    A.addQ(q4)
+    A = Automata(["a","b"])
+    q11 = Node("1,1")
+    q13 = Node("1,3")
+    q22 = Node("2,2")
+    q32 = Node("3,2")
+    q33 = Node("3,3")
+    q31 = Node("3,1")
+    A.addQ(q11)
+    A.addQ(q13)
+    A.addQ(q22)
+    A.addQ(q32)
+    A.addQ(q33)
+    A.addQ(q31)
 
-    A.addI(q1)
-    A.addF(q1)
-    A.addF(q3)
-    
-    A.addT(q1,"a",q1)
-    A.addT(q1,"a",q2)
-    A.addT(q1,"b",q2)
-    A.addT(q2,"b",q2)
-    A.addT(q2,"c",q3)
+    A.addI(q11)
+    A.addF(q11)
+    A.addF(q13)
+    A.addF(q33)
+
+    A.addT(q11,"b",q11)
+    A.addT(q11,"a",q22)
+
+    A.addT(q22, "a", q32)
+    A.addT(q22, "b", q13)
+
+    A.addT(q13, "b", q11)
+    A.addT(q13, "a", q22)
+
+    A.addT(q32,"a",q32)
+    A.addT(q32,"b", q33)
+
+    A.addT(q33,"a",q32)
+    A.addT(q33, "b", q31)
+    A.addT(q31, "a", q32)
+    A.addT(q31, "b", q31)
 
 
-    B = Automata(["a","b"])
-    q1 = Node("q1")
-    q2 = Node("q2")
-
-    B.addQ(q1)
-    B.addQ(q2)
-    B.addI(q1)
-    B.addF(q2)
-    B.addT(q1,"a",q2)
-    #B.addT(q2,"a",q1)
-    B.addT(q2,"b",q2)
-
-    print(B.Kleene().toString())
-
-
-
+    A.Kleene().print()
 
 if __name__ == '__main__':
     main()
