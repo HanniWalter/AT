@@ -232,8 +232,10 @@ class Automata:
                 return REGEX("EMPTY")
             if len(t) == 0 and m==l:
                 return REGEX("EPSILON")
-            if len(t) == 1:
+            if len(t) == 1 and m != l:
                 return REGEX("LITERAL",t[0])
+            if len(t) == 1 and m==l:
+                return REGEX("UNION", REGEX("LITERAL", t[0]), REGEX("EPSILON"))
             return REGEX("SET",[REGEX("Literal",x) for x in t])
         else:
             term1 = self.X(k-1,m,l)
@@ -241,7 +243,8 @@ class Automata:
             term3 = self.X(k-1,k,k)
             term4 = self.X(k-1,k,l)
 
-            return REGEX("UNION",term1,REGEX("CONCAT",term2,REGEX("CONCAT",REGEX("STAR",term3),term4)))
+            r =  REGEX("UNION",term1,REGEX("CONCAT",term2,REGEX("CONCAT",REGEX("STAR",term3),term4)))
+            return r
 
 class REGEX():
     def __init__(self,type,a = None,b = None):
@@ -251,7 +254,7 @@ class REGEX():
 
     def getSmart(self):
         if self.type == "STAR":
-            if self.a.getSmart().type == "EMPTY":
+            if self.a.getSmart().type == "EMPTY" or self.a.getSmart().type == "EPSILON":
                return REGEX("EPSILON")
             return REGEX("STAR",self.a.getSmart())
         if self.type == "CONCAT":
@@ -269,7 +272,7 @@ class REGEX():
                 return self.b.getSmart()
             if self.b.getSmart().type == "EMPTY":
                 return self.a.getSmart()
-            return REGEX("CONCAT",self.a.getSmart(),self.b.getSmart())
+            return REGEX("UNION",self.a.getSmart(),self.b.getSmart())
         if self.type == "MULTIUNION":
             if self.a == []:
                 return REGEX("EMPTY")
@@ -291,7 +294,7 @@ class REGEX():
         if smartself.type == "LITERAL":
             return smartself.a
         if smartself.type == "UNION":
-            return "{ " + smartself.a.toString(point) +" UNION "+ smartself.toString(point) + " }"
+            return "{" + smartself.a.toString(point) +","+ smartself.b.toString(point) + "}"
         if smartself.type == "MULTIUNION":
             return "MULTIUNION{ " +" , ".join([x.toString(point) for x in smartself.a]) +"}"
         if smartself.type == "CONCAT":
@@ -319,6 +322,7 @@ class REGEX():
 
 
 def main():
+
     A = Automata(["a","b"])
     q11 = Node("1,1")
     q13 = Node("1,3")
