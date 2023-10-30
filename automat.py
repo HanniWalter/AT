@@ -296,10 +296,12 @@ class REGEX():
         if smartself.type == "UNION":
             return "{" + smartself.a.toString(point) +","+ smartself.b.toString(point) + "}"
         if smartself.type == "MULTIUNION":
-            return "MULTIUNION{ " +" , ".join([x.toString(point) for x in smartself.a]) +"}"
+            return "{" +",".join([x.toString(point) for x in smartself.a]) +"}"
         if smartself.type == "CONCAT":
             return smartself.a.toString(point) + " POINT "*point +smartself.b.toString(point) 
         if smartself.type == "STAR":
+            if smartself.a.type in ["UNION","MULTIUNION","LITERAL"]:
+                return smartself.a.toString(point)+"*"
             return "("+ smartself.a.toString(point)+")*"
         if smartself.type == "EPSILON":
             return("E")
@@ -311,7 +313,7 @@ class REGEX():
     def print(self):
         smartself = self.getSmart()
         if smartself.type == "MULTIUNION":
-            print("MULTIUNION:{")
+            print("{")
             for x in smartself.a:
                 print(x.toString(),",")
             print("}")
@@ -359,8 +361,22 @@ def main():
     A.addT(q31, "a", q32)
     A.addT(q31, "b", q31)
 
+    B = Automata(["a","b"])
+    q1 = Node("q1")
+    q2 = Node("q2")
+    q3 = Node("q3")
+    q4 = Node("q4")
 
-    A.Kleene().print()
+    B.addQ(q1)
+    B.addQ(q2)
+
+    B.addI(q1)
+    B.addF(q1)
+
+    B.addT(q1, "a" , q2)
+    B.addT(q2, "b" , q1)
+
+    B.Kleene().print()
 
 if __name__ == '__main__':
     main()
