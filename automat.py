@@ -376,7 +376,7 @@ def main():
     B.addT(q1, "a" , q2)
     B.addT(q2, "b" , q1)
 
-    B.Kleene().print()
+    A.Kleene().print()
 
 if __name__ == '__main__':
     main()
